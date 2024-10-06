@@ -60,7 +60,7 @@ public class Bubble : MonoBehaviour
 
     public enum BubbleColor
     {
-       Blue, Yellow, Pink, Purple, Cray, Red
+       Blue, Yellow, Pink, Purple, Cyan, Red,Bomb
     }
 
     public void OnDrawGizmosSelected()

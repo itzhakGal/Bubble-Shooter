@@ -28,6 +28,8 @@ public class LevelManager : MonoBehaviour
     public List<GameObject> bubblesInScene;
     public List<string> colorsInScene;
     public GameObject level;
+    public GameObject bombPrefab; 
+
 
     private void Start()
     {
@@ -85,12 +87,33 @@ public class LevelManager : MonoBehaviour
     }
     #endregion
 
+    //private void FillWithBubbles(GameObject go, List<GameObject> _prefabs)
+    //{
+    //    foreach (Transform t in go.transform)
+    //    {
+    //        var bubble = Instantiate(_prefabs[Random.Range(0, _prefabs.Count)], bubblesArea);
+    //        bubble.transform.position = t.position;
+    //    }
+    //    Destroy(go);
+    //}
     private void FillWithBubbles(GameObject go, List<GameObject> _prefabs)
     {
         foreach (Transform t in go.transform)
         {
-            var bubble = Instantiate(_prefabs[Random.Range(0, _prefabs.Count)], bubblesArea);
-            bubble.transform.position = t.position;
+            GameObject bubbleToCreate;
+
+            // 10% סיכוי ליצור פצצה במקום בועה רגילה
+            if (Random.value < 0.1f)
+            {
+                bubbleToCreate = bombPrefab;  // יצירת פצצה
+            }
+            else
+            {
+                bubbleToCreate = _prefabs[Random.Range(0, _prefabs.Count)];  // יצירת בועה אקראית
+            }
+
+            var bubble = Instantiate(bubbleToCreate, bubblesArea);  // יצירת האובייקט
+            bubble.transform.position = t.position;  // הגדרת מיקום הבועה או הפצצה
         }
         Destroy(go);
     }

@@ -36,7 +36,6 @@ public class GameManager : MonoBehaviour
 		}
 	}
 
-
 	#endregion
 
 	private const int SEQUENCE_SIZE = 3;
@@ -52,10 +51,12 @@ public class GameManager : MonoBehaviour
 	public GameObject winThrows;
 	public GameObject playBtn;
 	public GameObject startUI;
+	public GameObject explosionPrefab;
 	public Transform bottomLimit;
 	public float dropSpeed = 50f;
 	public string gameState = "play";
 	public bool isDissolving = false;
+	private bool hitABomb = false;
 	public float dissolveSpeed = 2f;
 	public float rayDistance = 200f;
 
@@ -137,7 +138,7 @@ public class GameManager : MonoBehaviour
 	{
 		Time.timeScale = 1f;
 	}
-	
+
 	public void ResetGame()
 	{
 		// ודאי שכל האובייקטים שהוגדרו ב-GameManager מאתחלים את עצמם בצורה נכונה
@@ -148,11 +149,11 @@ public class GameManager : MonoBehaviour
 		winMenu = GameObject.Find("WinMenu");
 		if (winMenu != null)
 			winMenu.SetActive(false);
-		
+
 		lossMenu = GameObject.Find("WinMenu");
 		if (lossMenu != null)
 			lossMenu.SetActive(false);
-		
+
 		winScore = GameObject.Find("WinScore");
 		winThrows = GameObject.Find("WinThrows");
 		playBtn = GameObject.Find("PlayButton");
@@ -196,16 +197,18 @@ public class GameManager : MonoBehaviour
 
 		sequenceBubbles.Clear();
 		CheckBubbleSequence(currentBubble);
-		//ProcessSpecialBubbles(currentBubble);
+		ProcessSpecialBubbles(currentBubble);
 
-		if (sequenceBubbles.Count >= SEQUENCE_SIZE)
+		if ((sequenceBubbles.Count >= SEQUENCE_SIZE) || hitABomb)
 		{
 			ProcessBubblesInSequence();
+		
 			ProcessDisconnectedBubbles();
 		}
 
 		sequenceBubbles.Clear();
 		LevelManager.instance.UpdateListOfBubblesInScene();
+		hitABomb = false;
 
 		if (LevelManager.instance.bubblesInScene.Count == 0)
 		{
@@ -222,6 +225,7 @@ public class GameManager : MonoBehaviour
 
 		ProcessBottomLimit();
 	}
+
 
 	public void ProcessTurn(Transform currentBubble)
 	{
@@ -261,10 +265,48 @@ public class GameManager : MonoBehaviour
 		}
 	}
 
+	private void ProcessSpecialBubbles(Transform currentBubble)
+	{
+		Debug.Log("all is fine");
+		Bubble bubbleScript = currentBubble.GetComponent<Bubble>();
+		List<Transform> neighbours = bubbleScript.GetNeighbours();
+
+		foreach (Transform t in neighbours)
+		{
+			Bubble bScript = t.GetComponent<Bubble>();
+
+			if (bScript.bubbleColor == Bubble.BubbleColor.Bomb)
+			{
+				hitABomb = true;
+
+				//create explosion effect
+				GameObject explosion = Instantiate(explosionPrefab, t.position, Quaternion.identity);
+				explosion.transform.localScale = new Vector3(25f, 25f, 1f);
+				Destroy(explosion, 0.5f);
+
+				//destroy the bomb
+				Destroy(t.gameObject);
+
+				//destroy the neighbours of bomb
+				foreach (Transform t2 in bScript.GetNeighbours())
+				{
+					if (sequenceBubbles.Contains(t2))
+						sequenceBubbles.Remove(t2);
+
+					Destroy(t2.gameObject);
+				}
+
+				ScoreManager.GetInstance().AddScore(10);
+			}
+
+		}
+	}
 	private void ProcessBubblesInSequence()
 	{
-
-		AudioManager.instance.PlaySound("destroy");
+		if (hitABomb)
+			AudioManager.instance.PlaySound("explosion");
+		else
+			AudioManager.instance.PlaySound("destroy");
 
 		foreach (Transform t in sequenceBubbles)
 		{
