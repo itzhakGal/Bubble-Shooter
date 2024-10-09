@@ -10,7 +10,7 @@ public class Bubble : MonoBehaviour
     public bool isFixed;
     public bool isConnected;
 
-    public BubbleColor bubbleColor;
+    public BubbleColor bubbleColor ;
 
     private void OnCollisionEnter2D(Collision2D collision)
     {

@@ -1,0 +1,28 @@
+{
+    "levels": [
+        {
+            "level": 1,
+            "bubbleColors": 3,
+            "hasBombs": false,
+            "bubbleSpeed": 1.0
+        },
+        {
+            "level": 2,
+            "bubbleColors": 4,
+            "hasBombs": false,
+            "bubbleSpeed": 1.2000000476837159
+        },
+        {
+            "level": 3,
+            "bubbleColors": 4,
+            "hasBombs": true,
+            "bubbleSpeed": 1.5
+        },
+        {
+            "level": 4,
+            "bubbleColors": 5,
+            "hasBombs": true,
+            "bubbleSpeed": 2.0
+        }
+    ]
+}

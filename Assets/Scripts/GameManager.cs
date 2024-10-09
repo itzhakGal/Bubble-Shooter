@@ -23,18 +23,54 @@ public class GameManager : MonoBehaviour
 		bubblesToDissolve = new List<Transform>();
 	}
 
-	private void Start()
+	void Start()
 	{
-		// קריאה אוטומטית להתחלת המשחק לאחר ש-LevelManager כבר קיים
-		if (LevelManager.instance != null)
+		// ודא שה-jsonLoader מאותחל
+		jsonLoader = GetComponent<JSONLoader>();
+
+		if (jsonLoader == null)
 		{
-			LevelManager.instance.StartNewGame();
+			Debug.LogError("JSONLoader is not attached or found on the GameManager.");
 		}
 		else
 		{
-			Debug.LogError("LevelManager instance is not found!");
+			Debug.Log("Starting to load level data...");
+			jsonLoader.LoadLevelData();  // טען את נתוני השלבים קודם כל
+
+			Debug.Log("Loaded levels: " + jsonLoader.levelDataList.levels.Count);
+
+			// טעינת השלב הראשון
+			currentLevel = 1;  // קבע שאנחנו מתחילים מהשלב הראשוןOnLevelComplete
+            LoadLevel(currentLevel);
+		
+		}
+    }
+	
+
+
+	public void LoadLevel(int level)
+    {
+        LevelData levelData = jsonLoader.GetLevelData(level);
+		Debug.Log(levelData.bubbleColors);
+
+		if (levelData != null)
+        {
+            Debug.Log("Setting up level " + level);
+			// עדכון הבועות לפי השלב החדש
+			LevelManager.instance.ClearLevel();
+			LevelManager.instance.UpdateListOfBubblesInScene();
+			GameManager.instance.shootScript.CreateNewBubbles(); // יצירת בועות לשלב החדש
+			shootScript.SetupLevel(levelData.bubbleColors, levelData.bubbleSpeed, levelData.hasBombs);
+			GameManager.instance.gameState = "play";
+
+
+		}
+		else
+		{
+			Debug.LogError("Level not found.");
 		}
 	}
+
 
 	#endregion
 
@@ -52,14 +88,17 @@ public class GameManager : MonoBehaviour
 	public GameObject playBtn;
 	public GameObject startUI;
 	public GameObject explosionPrefab;
-	public Transform bottomLimit;
+    public Transform bottomLimit;
+	public Text score;
+	public Text throws;
 	public float dropSpeed = 50f;
 	public string gameState = "play";
 	public bool isDissolving = false;
 	private bool hitABomb = false;
 	public float dissolveSpeed = 2f;
 	public float rayDistance = 200f;
-
+	public int currentLevel = 1;
+	public JSONLoader jsonLoader;  // משתנה להחזיק את ה-JSONLoader שמכיל את נתוני השלבים
 	private void Update()
 	{
 		if (isDissolving)
@@ -126,10 +165,14 @@ public class GameManager : MonoBehaviour
 		LevelManager.instance.ClearLevel();
 		shootScript.canShoot = false;
 		startUI.SetActive(true);
-		gameState = "play";
+		lossMenu.SetActive(false); // הסתרת תפריט ההפסד במקרה של הפסד קודם
+		winMenu.SetActive(false);  // הסתרת תפריט הניצחון במקרה של ניצחון קודם
+        gameState = "play";  // עדכון המצב ל-play
+		currentLevel = 1;
+
 	}
 
-	private void PauseGame()
+    private void PauseGame()
 	{
 		Time.timeScale = 0f;
 	}
@@ -141,6 +184,7 @@ public class GameManager : MonoBehaviour
 
 	public void ResetGame()
 	{
+		currentLevel = 1;
 		// ודאי שכל האובייקטים שהוגדרו ב-GameManager מאתחלים את עצמם בצורה נכונה
 		startUI = GameObject.Find("StartUI");
 		if (startUI != null)
@@ -152,7 +196,10 @@ public class GameManager : MonoBehaviour
 
 		lossMenu = GameObject.Find("WinMenu");
 		if (lossMenu != null)
+        {
 			lossMenu.SetActive(false);
+		}
+		
 
 		winScore = GameObject.Find("WinScore");
 		winThrows = GameObject.Find("WinThrows");
@@ -186,10 +233,9 @@ public class GameManager : MonoBehaviour
 			LevelManager.instance.ClearLevel();
 			LevelManager.instance.UpdateListOfBubblesInScene();
 		}
-
+		
 		Debug.Log("Game has been reset successfully");
 	}
-
 
 	IEnumerator CheckSequence(Transform currentBubble)
 	{
@@ -202,7 +248,6 @@ public class GameManager : MonoBehaviour
 		if ((sequenceBubbles.Count >= SEQUENCE_SIZE) || hitABomb)
 		{
 			ProcessBubblesInSequence();
-		
 			ProcessDisconnectedBubbles();
 		}
 
@@ -212,11 +257,35 @@ public class GameManager : MonoBehaviour
 
 		if (LevelManager.instance.bubblesInScene.Count == 0)
 		{
-			ScoreManager man = ScoreManager.GetInstance();
-			winScore.GetComponent<Text>().text = man.GetScore().ToString();
-			winThrows.GetComponent<Text>().text = man.GetThrows().ToString();
-			winMenu.SetActive(true);
-		}
+			// Instead of showing the win screen, transition to the next level
+			Debug.Log("Level complete, moving to the next level.");
+
+			// Increment current level
+			currentLevel++;
+
+			// Check if there are more levels to load
+			if (currentLevel <= jsonLoader.levelDataList.levels.Count)
+            {
+				if (currentLevel < 1)
+					currentLevel = 1;
+				//OnLevelComplete();
+				LoadLevel(currentLevel); // Load the next level
+									// מילוי השלב החדש בבועות
+				LevelManager.instance.UpdateListOfBubblesInScene();  // עדכון רשימת הבועות לאחר הטעינה
+				LevelManager.instance.StartNewGame();  // הפעלת המשחק מחדש ומילוי בבועות
+
+				Debug.Log("load level");
+            }
+            else
+			{
+				Debug.Log("All levels completed!");
+                // Optionally, show a final victory message here
+                winMenu.SetActive(true);
+                score.text = (ScoreManager.GetInstance().GetScore()).ToString();
+				throws.text = (ScoreManager.GetInstance().GetThrows()).ToString();
+				currentLevel = 1;
+			}
+        }
 		else
 		{
 			shootScript.CreateNextBubble();
@@ -226,7 +295,7 @@ public class GameManager : MonoBehaviour
 		ProcessBottomLimit();
 	}
 
-
+	
 	public void ProcessTurn(Transform currentBubble)
 	{
 		StartCoroutine(CheckSequence(currentBubble));
@@ -234,11 +303,23 @@ public class GameManager : MonoBehaviour
 
 	private void ProcessBottomLimit()
 	{
+		// בדיקת בועות רק אם מצב המשחק הוא "play"
+		if (gameState != "play")
+			return;
+
 		foreach (Transform t in LevelManager.instance.bubblesArea)
 		{
-			if (t.GetComponent<Bubble>().isConnected && t.position.y < bottomLimit.position.y)
+			if (t == null || !t.GetComponent<Bubble>().isConnected)
+				continue;
+
+			// בדיקה אם בועה עברה את הגבול התחתון
+			if (t.position.y < bottomLimit.position.y)
 			{
+				Debug.Log("Bubble hit the bottom limit.");
 				lossMenu.SetActive(true);
+                gameState = "loss";  // עדכון מצב המשחק להפסד
+				currentLevel = 1;
+
 				break;
 			}
 		}
@@ -326,6 +407,7 @@ public class GameManager : MonoBehaviour
 
 	private void ProcessDisconnectedBubbles()
 	{
+		
 		SetAllBubblesConnectionToFalse();
 		SetConnectedBubblesToTrue();
 		CheckDisconnectedBubbles();
@@ -401,6 +483,42 @@ public class GameManager : MonoBehaviour
 		}
 		bubblesToDrop.Clear();
 	}
+	public void OnLevelComplete()
+	{
+		
+		if (currentLevel <= jsonLoader.levelDataList.levels.Count)
+		{
+			Debug.Log("Level complete, moving to the next level.");
+		}
+		else
+		{
+			Debug.Log("All levels completed!");
+            winMenu.SetActive(true);
+			
+
+		}
+    }
+	public void StartNextLevel()
+	{
+		
+		if (currentLevel <= jsonLoader.levelDataList.levels.Count)
+		{
+			Debug.Log("Moving to level " + currentLevel);
+			LoadLevel(currentLevel);  // טוען את השלב החדש
+			shootScript.CreateNewBubbles();  // אתחול מחדש של הבועות לשלב החדש
+
+			// ודא שהמשחק חוזר למצב 'play'
+			gameState = "play";
+		}
+		else
+		{
+			Debug.Log("All levels completed!");
+			// אפשר להוסיף מסך ניצחון כאן, או פעולה אחרת לסיום המשחק
+		}
+	}
+
+
+
 
 	#endregion
 }
