@@ -29,7 +29,7 @@ public class LevelManager : MonoBehaviour
     public List<string> colorsInScene;
     public List<GameObject>level;
     public GameObject bombPrefab;
-
+    public GameObject levelText;
     private void Start()
     {
         grid = GetComponent<Grid>();
@@ -48,6 +48,7 @@ public class LevelManager : MonoBehaviour
 
     private IEnumerator LoadSingleLevel()
     {
+
         LevelData currentLevelData = GameManager.instance.jsonLoader.GetLevelData(GameManager.instance.currentLevel);
         if (currentLevelData == null)
             Debug.Log("null");
@@ -59,8 +60,8 @@ public class LevelManager : MonoBehaviour
         }
         ClearLevel();
         Debug.Log("loading level " + currentLevelData.level);
-            GameObject levelToLoad = Instantiate(level[currentLevelData.level-1]);
-      
+        GameObject levelToLoad = Instantiate(level[currentLevelData.level-1]);
+        levelText.GetComponent<UnityEngine.UI.Text>().text = "Level " + (currentLevelData.level);
         FillWithBubbles(levelToLoad, bubblesPrefabs);
 
         SnapChildrensToGrid(bubblesArea);
