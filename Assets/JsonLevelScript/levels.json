@@ -1,0 +1,52 @@
+{
+    "levels": [
+        {
+            "level": 1,
+            "bubbleColors": 2,
+            "hasBombs": true,
+            "bubbleSpeed": 200.0
+        },
+        {
+            "level": 2,
+            "bubbleColors": 3,
+            "hasBombs": true,
+            "bubbleSpeed": 210.0
+        },
+        {
+            "level": 3,
+            "bubbleColors": 4,
+            "hasBombs": true,
+            "bubbleSpeed": 220.0
+        },
+        {
+            "level": 4,
+            "bubbleColors": 4,
+            "hasBombs": true,
+            "bubbleSpeed": 230.0
+        },
+        {
+            "level": 5,
+            "bubbleColors": 5,
+            "hasBombs": false,
+            "bubbleSpeed": 230.0
+        },
+        {
+            "level": 6,
+            "bubbleColors": 6,
+            "hasBombs": false,
+            "bubbleSpeed": 240.0
+        },
+        {
+            "level": 7,
+            "bubbleColors": 6,
+            "hasBombs": false,
+            "bubbleSpeed": 250.0
+        },
+        {
+            "level": 8,
+            "bubbleColors": 6,
+            "hasBombs": false,
+            "bubbleSpeed": 260.0
+        }
+    ]
+}
