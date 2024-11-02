@@ -6,7 +6,7 @@ Welcome to **Bubble Shooter**, an exciting 2D game where players shoot bubbles a
 
 **Bubble Shooter** is a 2D game where players control a cannon that shoots colorful bubbles. The goal is to shoot bubbles to clear the board by matching three or more bubbles of the same color.
 
-![Game Screenshot](screenshots/Screenshot 2024-11-02 161933.png)
+![Game Screenshot](screenshots/Screenshot.png)
 
 ## 🚀 Features 🚀
 
